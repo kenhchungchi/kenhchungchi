@@ -2,70 +2,77 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kênh Chứng Chỉ - Kho Tải</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kênh Chứng Chỉ - Kho Tải VIP</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f2f2f7; /* Màu nền xám nhẹ kiểu iOS */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
+        body { background: #f2f2f7; font-family: -apple-system, sans-serif; padding: 20px; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        h1 { color: #1c1c1e; margin-bottom: 20px; font-size: 24px; font-weight: 800; }
+        .app-list { width: 100%; max-width: 500px; }
+        .card {
+            background: white; border-radius: 18px; padding: 15px; margin-bottom: 15px;
+            display: flex; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: transform 0.2s;
         }
-        .container {
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
+        .card:active { transform: scale(0.98); background: #e5e5ea; }
+        .card img { width: 60px; height: 60px; border-radius: 14px; margin-right: 15px; object-fit: cover; border: 1px solid #f0f0f0; }
+        .info { text-align: left; flex-grow: 1; }
+        .info h3 { margin: 0; font-size: 17px; font-weight: 600; color: #000; }
+        .info p { margin: 4px 0 0; font-size: 13px; color: #8e8e93; }
+        .btn-get {
+            background: #f2f2f7; color: #007aff; font-weight: 700; padding: 8px 20px;
+            border-radius: 20px; text-decoration: none; font-size: 14px;
         }
-        h1 {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 5px;
-            color: #1c1c1e;
-        }
-        p {
-            color: #8e8e93;
-            margin-bottom: 30px;
-            font-size: 15px;
-        }
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 16px 0;
-            margin-bottom: 15px;
-            border-radius: 14px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 17px;
-            transition: opacity 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .btn:active { opacity: 0.7; }
-        
-        /* Màu nút bấm */
-        .btn-blue { background-color: #007aff; color: white; }
-        .btn-green { background-color: #34c759; color: white; }
+        .loader { margin-top: 50px; color: #888; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Kho Tải App iOS</h1>
-        <p>Server R2 Tốc Độ Cao - Miễn Phí</p>
+    <h1> Kênh Chứng Chỉ</h1>
+    <div id="loading" class="loader">Đang tải dữ liệu...</div>
+    <div id="app-container" class="app-list"></div>
 
-        <a href="itms-services://?action=download-manifest&url=https://kenhchungchi.pages.dev/install.plist" class="btn btn-blue">
-            ⬇️ Tải ESign VIP
-        </a>
+    <script>
+        // CẤU HÌNH CỦA BẠN (Đã điền sẵn)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAvFfWNrT1-AAfs3YsuXJ3I1EVbDj4fjxs",
+            authDomain: "kenhchungchi.firebaseapp.com",
+            projectId: "kenhchungchi",
+            storageBucket: "kenhchungchi.firebasestorage.app",
+            messagingSenderId: "960063891062",
+            appId: "1:960063891062:web:f23537252707456f192157"
+        };
 
-        <a href="itms-services://?action=download-manifest&url=https://kenhchungchi.pages.dev/codevn.plist" class="btn btn-green">
-            ⬇️ Tải CodeVN DotNet
-        </a>
-        
-    </div>
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
+        db.ref('apps').on('value', (snapshot) => {
+            document.getElementById('loading').style.display = 'none';
+            const container = document.getElementById('app-container');
+            container.innerHTML = ''; 
+            
+            if(!snapshot.exists()) {
+                container.innerHTML = '<p style="color:#999; margin-top:20px">Chưa có ứng dụng nào.</p>';
+                return;
+            }
+
+            // Lặp qua từng app để hiện lên
+            snapshot.forEach((child) => {
+                const app = child.val();
+                const html = `
+                    <div class="card">
+                        <img src="${app.icon}" onerror="this.src='https://via.placeholder.com/60'">
+                        <div class="info">
+                            <h3>${app.name}</h3>
+                            <p>v${app.version} • Signed</p>
+                        </div>
+                        <a href="itms-services://?action=download-manifest&url=${app.plist}" class="btn-get">TẢI</a>
+                    </div>
+                `;
+                container.innerHTML = html + container.innerHTML; // App mới nhất lên đầu
+            });
+        });
+    </script>
 </body>
 </html>
