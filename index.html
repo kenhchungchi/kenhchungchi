@@ -1,19 +1,71 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demo Tải App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kênh Chứng Chỉ - Kho Tải</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f2f2f7; /* Màu nền xám nhẹ kiểu iOS */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #1c1c1e;
+        }
+        p {
+            color: #8e8e93;
+            margin-bottom: 30px;
+            font-size: 15px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px 0;
+            margin-bottom: 15px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 17px;
+            transition: opacity 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:active { opacity: 0.7; }
+        
+        /* Màu nút bấm */
+        .btn-blue { background-color: #007aff; color: white; }
+        .btn-green { background-color: #34c759; color: white; }
+    </style>
 </head>
-<body style="text-align: center; padding-top: 50px; font-family: sans-serif;">
+<body>
 
-    <h1>ESign Demo</h1>
-    <p>Server: R2 (Free 100GB)</p>
-    
-    <a href="itms-services://?action=download-manifest&url=https://kenhchungchi.pages.dev/install.plist" 
-       style="background: #007aff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 20px; font-size: 18px; display: inline-block;">
-       BẤM CÀI ĐẶT NGAY
-    </a>
+    <div class="container">
+        <h1>Kho Tải App iOS</h1>
+        <p>Server R2 Tốc Độ Cao - Miễn Phí</p>
+
+        <a href="itms-services://?action=download-manifest&url=https://kenhchungchi.pages.dev/install.plist" class="btn btn-blue">
+            ⬇️ Tải ESign VIP
+        </a>
+
+        <a href="itms-services://?action=download-manifest&url=https://kenhchungchi.pages.dev/codevn.plist" class="btn btn-green">
+            ⬇️ Tải CodeVN DotNet
+        </a>
+        
+    </div>
 
 </body>
 </html>
