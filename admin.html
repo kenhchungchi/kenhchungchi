@@ -3,34 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Kênh Chứng Chỉ</title>
+    <title>Đăng Nhập Admin</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #222; color: white; max-width: 600px; margin: 0 auto; }
-        h2 { border-bottom: 1px solid #444; padding-bottom: 10px; color: #ffcc00; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; background: #333; color: white; box-sizing: border-box; font-size: 14px; }
-        button { width: 100%; padding: 15px; background: #007aff; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 8px; margin-top: 10px; font-size: 16px; }
-        .item { background: #333; padding: 15px; margin-top: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #444; }
-        .delete { background: #ff3b30; width: auto; padding: 8px 15px; margin: 0; font-size: 12px; }
+        body { font-family: sans-serif; padding: 20px; background: #222; color: white; max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; background: #333; color: white; box-sizing: border-box; font-size: 14px; border: 1px solid #444; }
+        button { width: 100%; padding: 15px; background: #007aff; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 8px; margin-top: 10px; }
+        .hidden { display: none; }
+        #login-form, #admin-panel { width: 100%; }
+        .item { background: #333; padding: 15px; margin-top: 10px; border-radius: 8px; display: flex; justify-content: space-between; border: 1px solid #555; }
+        .delete { background: #ff3b30; width: auto; padding: 5px 15px; }
     </style>
 </head>
 <body>
 
-    <h2>🔥 THÊM ỨNG DỤNG MỚI</h2>
-    
-    <input type="text" id="appName" placeholder="Tên App (Ví dụ: ESign VIP)">
-    <input type="text" id="appVersion" placeholder="Phiên bản (Ví dụ: 1.0)">
-    <input type="text" id="appIcon" placeholder="Link Ảnh Icon (Link ảnh)">
-    <input type="text" id="appPlist" placeholder="Link File Plist (https://kenhchungchi.com/xxx.plist)">
-    
-    <button onclick="addApp()">LƯU LÊN SERVER</button>
+    <div id="login-form">
+        <h2>🔒 ĐĂNG NHẬP HỆ THỐNG</h2>
+        <input type="email" id="email" placeholder="Email Admin">
+        <input type="password" id="password" placeholder="Mật khẩu">
+        <button onclick="login()">VÀO QUẢN LÝ</button>
+        <p id="error" style="color:red; display:none;">Sai mật khẩu!</p>
+    </div>
 
-    <h2>DANH SÁCH ĐANG CHẠY</h2>
-    <div id="list"></div>
+    <div id="admin-panel" class="hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2>🔥 QUẢN LÝ APP</h2>
+            <button onclick="logout()" style="width:auto; background:#444;">Đăng xuất</button>
+        </div>
+        
+        <input type="text" id="appName" placeholder="Tên App">
+        <input type="text" id="appVersion" placeholder="Phiên bản">
+        <input type="text" id="appIcon" placeholder="Link Icon">
+        <input type="text" id="appPlist" placeholder="Link Plist">
+        <button onclick="addApp()">LƯU APP</button>
+
+        <h3>DANH SÁCH</h3>
+        <div id="list"></div>
+    </div>
 
     <script>
-        // CẤU HÌNH FIREBASE
+        // --- DÁN CONFIG CỦA BẠN VÀO ĐÂY ---
         const firebaseConfig = {
             apiKey: "AIzaSyAvFfWNrT1-AAfs3YsuXJ3I1EVbDj4fjxs",
             authDomain: "kenhchungchi.firebaseapp.com",
@@ -39,9 +53,35 @@
             messagingSenderId: "960063891062",
             appId: "1:960063891062:web:f23537252707456f192157"
         };
+        // ----------------------------------
 
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const db = firebase.database();
+
+        // Kiểm tra trạng thái đăng nhập
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('admin-panel').classList.remove('hidden');
+                loadApps();
+            } else {
+                document.getElementById('login-form').classList.remove('hidden');
+                document.getElementById('admin-panel').classList.add('hidden');
+            }
+        });
+
+        function login() {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            auth.signInWithEmailAndPassword(email, pass)
+                .catch((error) => {
+                    document.getElementById('error').style.display = 'block';
+                    document.getElementById('error').innerText = "Lỗi: " + error.message;
+                });
+        }
+
+        function logout() { auth.signOut(); }
 
         function addApp() {
             const name = document.getElementById('appName').value;
@@ -49,45 +89,39 @@
             const icon = document.getElementById('appIcon').value;
             const plist = document.getElementById('appPlist').value;
 
-            if(!name || !plist) return alert("Thiếu tên hoặc link Plist!");
+            if(!name || !plist) return alert("Thiếu thông tin!");
 
-            const newPostKey = db.ref().child('apps').push().key;
-            db.ref('apps/' + newPostKey).set({
-                id: newPostKey,
-                name: name,
-                version: version,
-                icon: icon,
-                plist: plist
+            const newKey = db.ref().child('apps').push().key;
+            db.ref('apps/' + newKey).set({
+                id: newKey, name, version, icon, plist
             }, (error) => {
-                if (error) alert("Lỗi: " + error.message);
+                if (error) alert("Lỗi: Bạn không có quyền! (Hãy đăng nhập)");
                 else {
-                    alert("✅ Đã thêm thành công!");
+                    alert("✅ Đã lưu!");
                     document.getElementById('appName').value = '';
                     document.getElementById('appPlist').value = '';
                 }
             });
         }
 
-        db.ref('apps').on('value', (snapshot) => {
-            const list = document.getElementById('list');
-            list.innerHTML = '';
-            snapshot.forEach((child) => {
-                const app = child.val();
-                list.innerHTML += `
-                    <div class="item">
-                        <div>
-                            <strong>${app.name}</strong> <span style="color:#888">(v${app.version})</span>
+        function loadApps() {
+            db.ref('apps').on('value', (snapshot) => {
+                const list = document.getElementById('list');
+                list.innerHTML = '';
+                snapshot.forEach((child) => {
+                    const app = child.val();
+                    list.innerHTML += `
+                        <div class="item">
+                            <div><strong>${app.name}</strong> (v${app.version})</div>
+                            <button class="delete" onclick="deleteApp('${app.id}')">Xóa</button>
                         </div>
-                        <button class="delete" onclick="deleteApp('${app.id}')">Xóa</button>
-                    </div>
-                `;
+                    `;
+                });
             });
-        });
+        }
 
         window.deleteApp = function(key) {
-            if(confirm('Chắc chắn xóa app này?')) {
-                db.ref('apps/' + key).remove();
-            }
+            if(confirm('Xóa nhé?')) db.ref('apps/' + key).remove();
         }
     </script>
 </body>
