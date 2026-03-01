@@ -1,77 +1,632 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kênh Chứng Chỉ - Kho Tải VIP</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iSign Hub - Kho Chứng Chỉ & IPA Miễn Phí</title>
+    <!-- Thêm font SF Pro (mô phỏng) thông qua Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Inter"', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                    },
+                    colors: {
+                        apple: {
+                            blue: '#0071e3',
+                            dark: '#1d1d1f',
+                            gray: '#f5f5f7',
+                            glass: 'rgba(255, 255, 255, 0.72)'
+                        }
+                    },
+                    animation: {
+                        'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'spin-slow': 'spin 2s linear infinite',
+                    },
+                    keyframes: {
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px) scale(0.98)' },
+                            '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        body { background: #f2f2f7; font-family: -apple-system, sans-serif; padding: 20px; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        h1 { color: #1c1c1e; margin-bottom: 20px; font-size: 24px; font-weight: 800; }
-        .app-list { width: 100%; max-width: 500px; }
-        .card {
-            background: white; border-radius: 18px; padding: 15px; margin-bottom: 15px;
-            display: flex; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            transition: transform 0.2s;
+        body {
+            background-color: #f5f5f7;
+            color: #1d1d1f;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 113, 227, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.08), transparent 25%);
+            background-attachment: fixed;
+            overflow-x: hidden;
         }
-        .card:active { transform: scale(0.98); background: #e5e5ea; }
-        .card img { width: 60px; height: 60px; border-radius: 14px; margin-right: 15px; object-fit: cover; border: 1px solid #f0f0f0; }
-        .info { text-align: left; flex-grow: 1; }
-        .info h3 { margin: 0; font-size: 17px; font-weight: 600; color: #000; }
-        .info p { margin: 4px 0 0; font-size: 13px; color: #8e8e93; }
-        .btn-get {
-            background: #f2f2f7; color: #007aff; font-weight: 700; padding: 8px 20px;
-            border-radius: 20px; text-decoration: none; font-size: 14px;
+
+        /* Apple style glassmorphism */
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
-        .loader { margin-top: 50px; color: #888; font-size: 14px; }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        .glass-panel:hover {
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        /* iOS Segmented Control */
+        .segmented-control {
+            background: rgba(118, 118, 128, 0.12);
+            padding: 3px;
+            border-radius: 12px;
+            display: inline-flex;
+            position: relative;
+        }
+
+        .segment-btn {
+            position: relative;
+            z-index: 10;
+            padding: 6px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #3c3c43;
+            border-radius: 10px;
+            transition: color 0.2s;
+            cursor: pointer;
+            width: 100px;
+            text-align: center;
+        }
+
+        .segment-btn.active { color: #000; }
+
+        .segment-indicator {
+            position: absolute;
+            top: 3px;
+            bottom: 3px;
+            width: 100px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.12), 0 3px 1px rgba(0,0,0,0.04);
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.25, 1);
+            z-index: 1;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d1d6; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #8e8e93; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;  
+            overflow: hidden;
+        }
     </style>
 </head>
-<body>
+<body class="font-sans antialiased selection:bg-apple-blue selection:text-white">
 
-    <h1> Kênh Chứng Chỉ</h1>
-    <div id="loading" class="loader">Đang tải dữ liệu...</div>
-    <div id="app-container" class="app-list"></div>
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-40 glass-nav transition-all duration-300">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6">
+            <div class="flex items-center justify-between h-14">
+                <div class="flex items-center gap-2 cursor-pointer" onclick="window.scrollTo(0,0)">
+                    <div class="w-8 h-8 rounded-xl bg-apple-dark flex items-center justify-center shadow-md">
+                        <i class="fa-brands fa-apple text-white text-lg"></i>
+                    </div>
+                    <span class="font-bold text-lg tracking-tight text-apple-dark">iSign<span class="text-apple-blue">Hub</span></span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="#" class="text-sm font-semibold text-gray-500 hover:text-apple-dark transition-colors hidden sm:block">Hướng dẫn</a>
+                    <a href="#" class="text-sm font-semibold text-gray-500 hover:text-apple-dark transition-colors hidden sm:block">Về chúng tôi</a>
+                    <a href="https://t.me/your_telegram" target="_blank" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all text-apple-blue">
+                        <i class="fa-brands fa-telegram text-lg"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-    <script>
-        // CẤU HÌNH CỦA BẠN (Đã điền sẵn)
+    <!-- Main Content -->
+    <main class="relative z-10 pt-28 pb-12 px-4 sm:px-6 max-w-6xl mx-auto min-h-screen flex flex-col">
+        
+        <!-- Hero Section -->
+        <div class="text-center mb-12 animate-slide-up">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/60 border border-gray-200 backdrop-blur-md text-xs font-semibold mb-6 shadow-sm text-gray-600">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                Hệ thống chứng chỉ hoạt động ổn định
+            </div>
+            
+            <h1 id="site-title" class="text-5xl md:text-7xl font-bold mb-4 tracking-tight text-apple-dark">
+                Trải nghiệm <br class="md:hidden" /> <span class="text-transparent bg-clip-text bg-gradient-to-r from-apple-blue to-purple-500">Không Giới Hạn</span>
+            </h1>
+            
+            <p id="site-subtitle" class="text-gray-500 max-w-xl mx-auto text-base md:text-lg mb-8 font-medium">
+                Kho tàng ứng dụng, công cụ ký IPA và chứng chỉ doanh nghiệp miễn phí, cập nhật mới nhất cho thiết bị iOS của bạn.
+            </p>
+            
+            <div id="hero-buttons" class="flex flex-wrap justify-center gap-4">
+                <a href="#apps-section" class="px-6 py-3 rounded-full bg-apple-dark text-white font-semibold text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all">
+                    Khám phá ngay
+                </a>
+                <a href="#" onclick="alert('Đang phát triển...')" class="px-6 py-3 rounded-full bg-white text-apple-dark font-semibold text-sm shadow-md border border-gray-100 hover:bg-gray-50 transition-all flex items-center gap-2">
+                    <i class="fas fa-crown text-yellow-500"></i>
+                    Mua chứng chỉ VIP
+                </a>
+            </div>
+        </div>
+
+        <!-- Apps Section -->
+        <div id="apps-section" class="flex-1">
+            <!-- Tabs -->
+            <div class="flex justify-center mb-8 animate-fade-in" style="animation-delay: 0.2s;">
+                <div class="segmented-control">
+                    <div id="segment-indicator" class="segment-indicator" style="transform: translateX(0);"></div>
+                    <button class="segment-btn active" data-tab="esign" onclick="switchTab('esign', 0)">Ký IPA</button>
+                    <button class="segment-btn" data-tab="cert" onclick="switchTab('cert', 1)">Chứng Chỉ</button>
+                    <button class="segment-btn" data-tab="mods" onclick="switchTab('mods', 2)">App Mods</button>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div id="search-container" class="hidden mb-8 max-w-md mx-auto animate-slide-up">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" id="app-search" class="w-full bg-white border border-gray-200 rounded-2xl py-3.5 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-apple-blue/50 focus:border-apple-blue transition-all shadow-sm" placeholder="Tìm kiếm ứng dụng, games...">
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loading-indicator" class="flex flex-col items-center justify-center py-12">
+                <i class="fas fa-circle-notch fa-spin text-3xl text-apple-blue mb-3"></i>
+                <p class="text-sm text-gray-500 font-medium mt-3" id="loading-text">Đang tải dữ liệu từ máy chủ...</p>
+            </div>
+
+            <!-- Content Area -->
+            <div id="content-area" class="relative min-h-[300px] hidden">
+                <div id="esign-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 transition-opacity duration-300"></div>
+                <div id="cert-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 hidden transition-opacity duration-300"></div>
+                <div id="mods-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 hidden transition-opacity duration-300"></div>
+
+                <!-- Empty State -->
+                <div id="no-results" class="hidden absolute inset-0 flex flex-col items-center justify-center text-gray-400 py-12">
+                    <i class="fas fa-box-open text-4xl mb-3 opacity-50"></i>
+                    <p class="font-medium text-sm">Không tìm thấy dữ liệu phù hợp</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-20 py-8 border-t border-gray-200/60 text-center">
+            <p class="text-gray-400 text-xs font-medium cursor-pointer" id="admin-trigger">
+                &copy; 2026 iSign Hub. Thiết kế với <i class="fas fa-heart text-red-400 mx-1"></i> dành cho cộng đồng iOS.
+            </p>
+        </footer>
+    </main>
+
+    <!-- iOS Style Bottom Sheet / Popup -->
+    <div id="app-popup" class="fixed inset-0 z-[100] hidden items-end sm:items-center justify-center">
+        <!-- Overlay -->
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity opacity-0" id="popup-overlay"></div>
+        
+        <!-- Modal Content -->
+        <div class="relative w-full max-w-md bg-white rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden transform translate-y-full transition-transform duration-300 ease-out" id="popup-content">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mt-3 sm:hidden"></div>
+
+            <button class="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center transition-colors z-10" id="close-popup">
+                <i class="fas fa-times text-sm"></i>
+            </button>
+
+            <div class="p-6 sm:p-8 pt-8 sm:pt-8">
+                <!-- App Info Header -->
+                <div class="flex gap-4 mb-6">
+                    <div class="w-20 h-20 flex-shrink-0 rounded-[20px] shadow-sm border border-gray-100 overflow-hidden bg-white">
+                        <img id="popup-img" src="" alt="App Icon" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex flex-col justify-center min-w-0">
+                        <h3 class="font-bold text-2xl text-apple-dark truncate" id="popup-title">App Name</h3>
+                        <p class="text-sm text-gray-500 mt-1 line-clamp-2" id="popup-desc">Description</p>
+                    </div>
+                </div>
+
+                <!-- App Stats -->
+                <div class="grid grid-cols-3 py-4 border-y border-gray-100 mb-6">
+                    <div class="flex flex-col items-center border-r border-gray-100">
+                        <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Đánh giá</span>
+                        <div class="text-xl font-bold text-gray-700">4.9</div>
+                        <div class="flex items-center gap-0.5 mt-0.5">
+                            <i class="fas fa-star text-[9px] text-gray-400"></i>
+                            <i class="fas fa-star text-[9px] text-gray-400"></i>
+                            <i class="fas fa-star text-[9px] text-gray-400"></i>
+                            <i class="fas fa-star text-[9px] text-gray-400"></i>
+                            <i class="fas fa-star-half-alt text-[9px] text-gray-400"></i>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-center border-r border-gray-100">
+                        <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Lượt Tải</span>
+                        <div class="text-xl font-bold text-gray-700" id="popup-downloads">0</div>
+                        <span class="text-[10px] text-gray-400 mt-0.5">Lượt</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Cung cấp</span>
+                        <div class="text-xl font-bold text-gray-700"><i class="fa-brands fa-apple"></i></div>
+                        <span class="text-[10px] text-gray-400 mt-0.5">Developer</span>
+                    </div>
+                </div>
+
+                <!-- Premium Banner -->
+                <div class="mb-6 p-4 rounded-2xl bg-[#fff8e6] border border-[#ffe8b3] flex items-start gap-3 relative overflow-hidden">
+                    <i class="fas fa-shield-alt text-[#f59e0b] text-xl mt-0.5"></i>
+                    <div>
+                        <h4 class="text-sm font-bold text-[#b45309] mb-1">Chứng chỉ hay bị thu hồi?</h4>
+                        <p class="text-xs text-[#d97706] mb-3">Nâng cấp Chứng Chỉ VIP để sử dụng ổn định 1 năm không lo revoke, hỗ trợ 24/7.</p>
+                        <button onclick="window.open('https://muachungchi.com', '_blank')" class="text-xs font-bold text-white bg-[#f59e0b] hover:bg-[#d97706] px-4 py-1.5 rounded-full transition-colors">Tìm hiểu thêm</button>
+                    </div>
+                </div>
+
+                <!-- Download Action -->
+                <div class="flex flex-col gap-3">
+                    <a id="popup-install-btn" href="#" target="_blank" class="download-counter w-full py-3.5 rounded-2xl bg-apple-blue hover:bg-blue-600 text-white font-bold text-center transition-colors shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 relative overflow-hidden group">
+                        <span class="relative z-10 flex items-center gap-2">
+                            <i class="fas fa-cloud-download-alt"></i>
+                            NHẬN ỨNG DỤNG
+                        </span>
+                        <div class="absolute inset-0 bg-white/20 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
+                    </a>
+                    
+                    <p class="text-[11px] text-center text-gray-400 font-medium">
+                        Tự động đóng popup sau <span id="countdown" class="text-apple-blue font-bold">30</span> giây
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FIREBASE INTEGRATION SCRIPT -->
+    <script type="module">
+        // Import Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+
+        // ==========================================
+        // 1. DÁN CẤU HÌNH FIREBASE CỦA BẠN VÀO ĐÂY
+        // ==========================================
         const firebaseConfig = {
-            apiKey: "AIzaSyAvFfWNrT1-AAfs3YsuXJ3I1EVbDj4fjxs",
-            authDomain: "kenhchungchi.firebaseapp.com",
-            projectId: "kenhchungchi",
-            storageBucket: "kenhchungchi.firebasestorage.app",
-            messagingSenderId: "960063891062",
-            appId: "1:960063891062:web:f23537252707456f192157"
+            apiKey: "THAY_BANG_API_KEY_CUA_BAN",
+            authDomain: "THAY_BANG_PROJECT_ID.firebaseapp.com",
+            projectId: "THAY_BANG_PROJECT_ID",
+            storageBucket: "THAY_BANG_PROJECT_ID.firebasestorage.app",
+            messagingSenderId: "THAY_BANG_SENDER_ID",
+            appId: "THAY_BANG_APP_ID"
         };
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        // Biến lưu trữ dữ liệu mảng apps
+        let appDataList = [];
+        let db;
 
-        db.ref('apps').on('value', (snapshot) => {
-            document.getElementById('loading').style.display = 'none';
-            const container = document.getElementById('app-container');
-            container.innerHTML = ''; 
-            
-            if(!snapshot.exists()) {
-                container.innerHTML = '<p style="color:#999; margin-top:20px">Chưa có ứng dụng nào.</p>';
+        // KIỂM TRA CHẾ ĐỘ: Nếu người dùng chưa cấu hình Firebase, tự động hiển thị dữ liệu mẫu.
+        const isMockMode = firebaseConfig.projectId === "THAY_BANG_PROJECT_ID";
+
+        if (!isMockMode) {
+            // Khởi tạo Firebase nếu đã có cấu hình thật
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+        }
+
+        // Dữ liệu mẫu hiển thị tạm thời khi chưa cấu hình Firebase
+        const mockApps = [
+            { id: 'es1', name: "ESign VIP Bản Mới Nhất", desc: "Công cụ ký file IPA trực tiếp", type: "esign", icon: "https://i.imgur.com/hPj8ui8.png", url: "#", downloads: 14500, badge: "DỮ LIỆU MẪU" },
+            { id: 'c1', name: "Chứng chỉ HDFC Life", desc: "Sống thọ, ít bị thu hồi", type: "cert", icon: "https://i.imgur.com/TGdsNKF.png", url: "#", downloads: 9999, badge: "DỮ LIỆU MẪU" },
+            { id: 'm1', name: "Spotify++", desc: "Nghe nhạc Premium không quảng cáo", type: "mods", icon: "https://is1-ssl.mzstatic.com/image/thumb/Purple126/v4/f5/a8/f6/f5a8f60b-33c9-052d-fceb-51368297bcf5/AppIcon-1x_U007emarketing-0-7-0-85-220.png/256x256bb.jpg", url: "#", downloads: 45000, badge: "DỮ LIỆU MẪU" }
+        ];
+
+        // ==========================================
+        // 2. LẤY DỮ LIỆU TỪ FIRESTORE (Hoặc dữ liệu mẫu)
+        // ==========================================
+        function listenToApps() {
+            if (isMockMode) {
+                console.warn("Đang chạy chế độ Dữ Liệu Mẫu do chưa cấu hình Firebase. Vui lòng cập nhật firebaseConfig!");
+                document.getElementById('loading-text').innerHTML = "Chưa có Firebase Config. Đang hiển thị <span class='text-orange-500'>Dữ Liệu Mẫu</span>...";
+                
+                setTimeout(() => {
+                    appDataList = [...mockApps];
+                    document.getElementById('loading-indicator').classList.add('hidden');
+                    document.getElementById('content-area').classList.remove('hidden');
+                    renderApps();
+                }, 800);
                 return;
             }
 
-            // Lặp qua từng app để hiện lên
-            snapshot.forEach((child) => {
-                const app = child.val();
-                const html = `
-                    <div class="card">
-                        <img src="${app.icon}" onerror="this.src='https://via.placeholder.com/60'">
-                        <div class="info">
-                            <h3>${app.name}</h3>
-                            <p>v${app.version} • Signed</p>
-                        </div>
-                        <a href="itms-services://?action=download-manifest&url=${app.plist}" class="btn-get">TẢI</a>
-                    </div>
-                `;
-                container.innerHTML = html + container.innerHTML; // App mới nhất lên đầu
+            const appsCollection = collection(db, "apps");
+
+            // onSnapshot giúp tự động cập nhật UI khi Admin thêm/sửa/xóa App trên DB
+            onSnapshot(appsCollection, (snapshot) => {
+                appDataList = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data.status !== 'hidden') {
+                        appDataList.push({ id: doc.id, ...data });
+                    }
+                });
+
+                appDataList.sort((a, b) => {
+                    const orderA = (a.order !== undefined && a.order !== null) ? a.order : 999999;
+                    const orderB = (b.order !== undefined && b.order !== null) ? b.order : 999999;
+                    return orderA - orderB; 
+                });
+
+                document.getElementById('loading-indicator').classList.add('hidden');
+                document.getElementById('content-area').classList.remove('hidden');
+                
+                renderApps();
+                
+                const searchInput = document.getElementById('app-search').value;
+                if(searchInput) filterApps(searchInput);
+                
+            }, (error) => {
+                console.error("Lỗi khi tải dữ liệu Firebase:", error);
+                document.getElementById('loading-indicator').innerHTML = `<p class="text-red-500 font-medium px-4 text-center">Lỗi kết nối Firebase (Permission denied). Vui lòng cấu hình đúng Project ID và thiết lập Database Rules.</p>`;
             });
+        }
+
+        // Tăng lượt tải trên DB
+        window.incrementDownload = async function(id) {
+            if(!id) return;
+            
+            if (isMockMode) {
+                const app = appDataList.find(a => a.id === id);
+                if(app) {
+                    app.downloads++;
+                    renderApps(); 
+                }
+                return;
+            }
+
+            try { 
+                await updateDoc(doc(db, "apps", id), { downloads: increment(1) }); 
+            } catch(e) { console.error("Lỗi tăng lượt tải", e); }
+        }
+
+        // ==========================================
+        // 3. RENDER UI TỪ DỮ LIỆU
+        // ==========================================
+        function escapeHtml(unsafe) {
+            if (typeof unsafe !== 'string') return unsafe;
+            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function formatNumber(num) {
+            if(!num) return 0;
+            return num > 999 ? (num/1000).toFixed(1) + 'k' : num;
+        }
+
+        function createCard(item, isMod = false) {
+            const btnClass = isMod ? 
+                `w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-apple-blue hover:bg-apple-blue hover:text-white transition-colors` : 
+                `px-4 py-1.5 rounded-full bg-gray-100 text-apple-blue font-bold text-xs hover:bg-apple-blue hover:text-white transition-colors uppercase tracking-wide`;
+            
+            const btnContent = isMod ? `<i class="fas fa-arrow-down text-sm"></i>` : `Nhận`;
+
+            return `
+                <div class="glass-panel rounded-2xl p-4 flex items-center gap-4 group app-item" data-title="${escapeHtml(item.name || '').toLowerCase()}">
+                    <div class="relative w-[60px] h-[60px] rounded-[14px] overflow-hidden shadow-sm border border-gray-200/50 bg-white flex-shrink-0">
+                        <img src="${escapeHtml(item.icon)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onerror="this.src='https://placehold.co/100'">
+                        ${item.badge ? `<span class="absolute top-0 right-0 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-bl-lg z-10">${escapeHtml(item.badge)}</span>` : ''}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-bold text-[15px] truncate text-apple-dark">${escapeHtml(item.name)}</h3>
+                        <p class="text-[12px] text-gray-500 mt-0.5 truncate">${escapeHtml(item.desc)}</p>
+                        <div class="flex items-center gap-2 mt-1.5">
+                            <span class="text-[10px] text-gray-400 font-medium flex items-center gap-1">
+                                <i class="fas fa-download"></i> ${formatNumber(item.downloads)}
+                            </span>
+                        </div>
+                    </div>
+                    <button class="download-trigger flex-shrink-0 ${btnClass}" 
+                            data-id="${item.id}" 
+                            data-name="${escapeHtml(item.name)}" 
+                            data-desc="${escapeHtml(item.desc)}"
+                            data-icon="${escapeHtml(item.icon)}"
+                            data-url="${escapeHtml(item.url)}"
+                            data-downloads="${item.downloads || 0}">
+                        ${btnContent}
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderApps() {
+            const esignHtml = appDataList.filter(a => a.type === 'esign').map(a => createCard(a)).join('');
+            const certHtml = appDataList.filter(a => a.type === 'cert').map(a => createCard(a)).join('');
+            const modsHtml = appDataList.filter(a => a.type === 'mods').map(a => createCard(a, true)).join('');
+
+            document.getElementById('esign-list').innerHTML = esignHtml || '<p class="col-span-full text-center text-gray-400 text-sm py-4">Chưa có ứng dụng nào trong mục này</p>';
+            document.getElementById('cert-list').innerHTML = certHtml || '<p class="col-span-full text-center text-gray-400 text-sm py-4">Chưa có dữ liệu chứng chỉ</p>';
+            document.getElementById('mods-list').innerHTML = modsHtml || '<p class="col-span-full text-center text-gray-400 text-sm py-4">Chưa có dữ liệu Mods</p>';
+
+            attachDownloadEvents();
+        }
+
+        // ==========================================
+        // 4. UI INTERACTIONS (Tabs, Search, Popup)
+        // ==========================================
+        window.switchTab = function(tabId, index) {
+            document.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.segment-btn[data-tab="${tabId}"]`).classList.add('active');
+            
+            // Di chuyển thanh Segment
+            document.getElementById('segment-indicator').style.transform = `translateX(${index * 100}px)`;
+
+            // Ẩn nội dung cũ
+            ['esign', 'cert', 'mods'].forEach(t => {
+                document.getElementById(`${t}-list`).classList.add('hidden');
+            });
+            
+            // Reset Search
+            document.getElementById('app-search').value = '';
+            filterApps('');
+
+            // Hiện Tab mới
+            document.getElementById(`${tabId}-list`).classList.remove('hidden');
+
+            const searchContainer = document.getElementById('search-container');
+            if (tabId === 'mods') {
+                searchContainer.classList.remove('hidden');
+            } else {
+                searchContainer.classList.add('hidden');
+            }
+        }
+
+        window.filterApps = function(term) {
+            const activeTab = document.querySelector('.segment-btn.active').dataset.tab;
+            const container = document.getElementById(`${activeTab}-list`);
+            const items = container.querySelectorAll('.app-item');
+            let hasVisible = false;
+
+            items.forEach(item => {
+                const title = item.dataset.title;
+                if (title.includes(term.toLowerCase())) {
+                    item.style.display = 'flex';
+                    hasVisible = true;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            const noResults = document.getElementById('no-results');
+            if (!hasVisible && items.length > 0 && term !== '') {
+                noResults.classList.remove('hidden');
+            } else {
+                noResults.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('app-search').addEventListener('input', (e) => filterApps(e.target.value));
+
+        // POPUP LOGIC
+        const popup = document.getElementById('app-popup');
+        const popupOverlay = document.getElementById('popup-overlay');
+        const popupContent = document.getElementById('popup-content');
+        let countdownTimer;
+
+        function openPopup(data) {
+            document.getElementById('popup-title').textContent = data.name;
+            document.getElementById('popup-desc').textContent = data.desc;
+            document.getElementById('popup-img').src = data.icon;
+            document.getElementById('popup-install-btn').href = data.url;
+            document.getElementById('popup-install-btn').dataset.id = data.id; 
+            document.getElementById('popup-downloads').textContent = formatNumber(data.downloads);
+
+            popup.classList.remove('hidden');
+            popup.classList.add('flex');
+            
+            setTimeout(() => {
+                popupOverlay.classList.remove('opacity-0');
+                popupOverlay.classList.add('opacity-100');
+                popupContent.classList.remove('translate-y-full');
+                popupContent.classList.add('translate-y-0');
+            }, 10);
+            
+            document.body.style.overflow = 'hidden';
+
+            let time = 30;
+            const countdownEl = document.getElementById('countdown');
+            countdownEl.textContent = time;
+            
+            clearInterval(countdownTimer);
+            countdownTimer = setInterval(() => {
+                time--;
+                countdownEl.textContent = time;
+                if (time <= 0) closePopup();
+            }, 1000);
+        }
+
+        function closePopup() {
+            popupOverlay.classList.remove('opacity-100');
+            popupOverlay.classList.add('opacity-0');
+            popupContent.classList.remove('translate-y-0');
+            popupContent.classList.add('translate-y-full');
+
+            setTimeout(() => {
+                popup.classList.add('hidden');
+                popup.classList.remove('flex');
+                document.body.style.overflow = '';
+            }, 300);
+
+            clearInterval(countdownTimer);
+        }
+
+        function attachDownloadEvents() {
+            document.querySelectorAll('.download-trigger').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    openPopup({
+                        id: btn.dataset.id,
+                        name: btn.dataset.name,
+                        desc: btn.dataset.desc,
+                        icon: btn.dataset.icon,
+                        url: btn.dataset.url,
+                        downloads: parseInt(btn.dataset.downloads || 0)
+                    });
+                });
+            });
+        }
+
+        document.getElementById('close-popup').addEventListener('click', closePopup);
+        document.getElementById('popup-overlay').addEventListener('click', closePopup);
+        
+        document.getElementById('popup-install-btn').addEventListener('click', (e) => {
+            const id = e.currentTarget.dataset.id;
+            window.incrementDownload(id);
+            closePopup();
+        });
+
+        let adminClicks = 0;
+        document.getElementById('admin-trigger')?.addEventListener('click', () => {
+            adminClicks++;
+            if(adminClicks === 5) {
+                window.location.href = 'admin.html';
+            }
+            setTimeout(() => adminClicks = 0, 2000);
+        });
+
+        // KHỞI CHẠY KHI TẢI TRANG
+        window.addEventListener('DOMContentLoaded', () => {
+            listenToApps();
+            switchTab('esign', 0);
         });
     </script>
 </body>
